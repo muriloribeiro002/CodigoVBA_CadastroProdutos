@@ -1,0 +1,138 @@
+Option Explicit
+
+
+'Variaveis para uso geral neste modulo'
+Private lin         As Long
+Private i           As Long
+Private resposta    As VbMsgBoxResult
+Private rng         As Range
+
+'Salvo os dados na planilha Base Dados'
+Public Sub Salva_Dados_Base()
+
+'1º Restrição - Se o campo descrição estiver vazio (não poderá ficar em branco)'
+If PlanForm.Range("Campo1") = Empty Then
+    MsgBox "A descrição do produto e obrigatório.", vbExclamation, "Cadastro de Produto"
+    Exit Sub
+End If
+
+'2º Restrição - Se o campo Quantidade estiver vazio (não poderá ficar em branco) '
+If PlanForm.Range("Campo3") = Empty Then
+    MsgBox "O preço unitário do produto e obrigatório.", vbExclamation, "Cadastro de Produto"
+    Exit Sub
+End If
+
+'3º Restrição - Se o campo Preço Unitário estiver vazio (não poderá ficar em branco) '
+If PlanForm.Range("Campo2") = Empty Then
+    MsgBox "A quantidade do produto e obrigatório.", vbExclamation, "Cadastro de Produto"
+    Exit Sub
+Else
+
+lin = 2
+
+lin = PlanBase.Cells(PlanBase.Rows.Count, "A").End(xlUp).Row + 1
+
+lin = 2
+
+'4º Restrição - Se o código do produto já estiver cadastrado na base de dados (não poderá ter produtos repetidos)'
+Do Until PlanBase.Cells(lin, 1).Value = Empty
+    If PlanForm.Range("Campo0").Value = PlanBase.Cells(lin, 1).Value Then
+    MsgBox "Este produto já está cadastrado na base de dados!", vbCritical, "Cadastro de Produto"
+    PlanForm.Range("Campo0").Value = PlanForm.Range("Campo0").Value + 1
+    Exit Sub
+    PlanForm.Select
+    End If
+lin = lin + 1
+Loop
+
+'Inicia o salvamento das informações na base de dados'
+For i = 0 To 4
+    PlanBase.Cells(lin, 1 + i) = PlanForm.Range("Campo" & i).Value
+    PlanBase.Cells(lin, 6) = VBA.Environ("COMPUTERNAME")
+Next i
+    MsgBox "Produto cadastrado com sucesso!", vbOKOnly, "Cadastro de Produto"
+ PlanForm.Range("Campo0").Value = PlanForm.Range("Campo0").Value + 1
+End If
+End Sub
+
+
+'Consultar dados na base de dados'
+Public Sub Consulta_Produtos_Base()
+
+If PlanForm.Range("Campo0") = Empty Then
+    MsgBox "Digite um código para pesquisar", vbCritical, "Cadastro de Produto"
+    Exit Sub
+Else
+
+Set rng = PlanBase.Range("A:A").Find(PlanForm.Range("Campo0").Value, After:=PlanBase.Range("A1"))
+
+    If rng Is Nothing Then
+        PlanForm.Range("Campo0").Value = Empty
+        MsgBox "Código Inexistente", vbCritical, "Cadastro de Produto"
+        Exit Sub
+    Else
+        For i = 0 To 3
+            PlanForm.Range("Campo1") = rng.Offset(0, 1).Value 'Descrição do Produto'
+            PlanForm.Range("Campo2") = rng.Offset(0, 2).Value 'Quantidade'
+            PlanForm.Range("Campo3") = rng.Offset(0, 3).Value 'Preço Unitário'
+        Next
+    End If
+    End If
+End Sub
+
+'Atualiza os dados na base'
+Public Sub Atualizar_Dados_Base()
+
+'1º Restrição - Se o campo código estiver vazio'
+If PlanForm.Range("Campo0") = Empty Then
+    MsgBox "Digite um código para atualizar", vbCritical, "Cadastro de Produto"
+    Exit Sub
+Else
+
+Set rng = PlanBase.Range("A:A").Find(PlanForm.Range("Campo0").Value, After:=PlanBase.Range("A1"))
+
+If rng Is Nothing Then
+        PlanForm.Range("Campo0").Value = Empty
+        MsgBox "Código Inexistente.", vbExclamation, "Cadastro de Produto"
+        Exit Sub
+    Else
+        For i = 1 To 4
+           rng.Offset(0, i).Value = PlanForm.Range("Campo" & i).Value
+           Next
+           MsgBox "Dados alterados com sucesso.", vbOKOnly, "Cadastro de Produto"
+    End If
+    End If
+End Sub
+
+'Deleta os dados conforme o código pesquisado'
+Public Sub Deletar_Dados_Base()
+
+'1º Restrição - Se o campo código estiver vazio'
+If PlanForm.Range("Campo0") = Empty Then
+    MsgBox "Digite um código para deletar", vbCritical, "Cadastro de Produto"
+    Exit Sub
+Else
+
+Set rng = PlanBase.Range("A:A").Find(PlanForm.Range("Campo0").Value, After:=PlanBase.Range("A1"))
+
+If rng Is Nothing Then
+        PlanForm.Range("Campo0").Value = Empty
+        MsgBox "Código Inexistente.", vbExclamation, "Cadastro de Produto"
+        Exit Sub
+Else
+    
+        rng.EntireRow.Delete
+End If
+        MsgBox "Produto deletado com sucesso", vbOKOnly, "Cadastro de Produto"
+End If
+End Sub
+
+'Limpar os campos do formulário'
+Public Sub limpar_Campos_Formulario()
+    For i = 1 To 3
+        PlanForm.Range("Campo" & i).Select
+        Selection.ClearContents
+    Next i
+        PlanForm.Range("Campo1").Select
+End Sub
+
